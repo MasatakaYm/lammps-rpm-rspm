@@ -1,0 +1,71 @@
+#
+# Styles
+#
+units          real
+atom_style     full
+
+
+#
+# Potential Styles
+#
+bond_style     harmonic
+angle_style    charmm
+dihedral_style charmm
+improper_style harmonic
+
+
+#
+# Box information
+#
+boundary p p p
+
+
+#
+# Pair interactions
+#
+pair_style lj/cut 14.0
+special_bonds lj 0.0 0.0 0.0
+
+neighbor 2.0 bin
+neigh_modify delay 2 every 1
+
+
+#
+# Temper settings
+#
+variable r world 0     1     2     3     4     5     6     7
+variable w world 0     1     2     3     4     5     6     7
+variable t world 100.0 129.2 166.9 215.5 278.4 359.6 464.5 600.0
+
+
+#
+# Load inputs
+#
+read_data ./c40.data
+
+
+#
+# Ensembles Settings
+#
+fix fmal all momentum 500 linear 1 1 1 angular rescale
+fix fnve all nve
+fix flng all langevin $t $t 100.0 1460 zero yes
+
+velocity all create $t 4540 dist gaussian mom yes rot yes
+
+
+#
+# Time step Settings
+#
+timestep 2.0
+reset_timestep 0
+
+thermo_style multi
+thermo 500
+
+dump d1 all dcd 500 mdtraj-rep${r}.dcd
+
+temper/subpermutation 21000000 500 $t flng 0 1710  # ${w}
+
+write_restart mdout-rep${r}.res
+write_data    mdout-rep${r}.data
